@@ -72,7 +72,7 @@ class SEResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
-        self.avgpool = nn.AvgPool1d(7)
+        self.avgpool = nn.AdaptiveAvgPool1d(1)
         self.fc = nn.Linear(18432, num_classes)
 
         for m in self.modules():

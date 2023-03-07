@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, roc_auc_score
 import wfdb
-
+import os
 
 def split_data(seed=42):
     folds = range(1, 11)
@@ -45,3 +45,14 @@ def cal_f1s(y_trues, y_scores, find_optimal=True):
 
 def cal_aucs(y_trues, y_scores):
     return roc_auc_score(y_trues, y_scores, average=None)
+
+
+def get_size(file_path, unit='bytes'):
+    file_size = os.path.getsize(file_path)
+    exponents_map = {'bytes': 0, 'kb': 1, 'mb': 2, 'gb': 3}
+    if unit not in exponents_map:
+        raise ValueError("Must select from \
+        ['bytes', 'kb', 'mb', 'gb']")
+    else:
+        size = file_size / 1024 ** exponents_map[unit]
+        return round(size, 3)

@@ -15,15 +15,17 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=42, help='Seed to split data')
     parser.add_argument('--num-classes', type=int, default=int, help='Num of diagnostic classes')
     parser.add_argument('--lr', '--learning-rate', type=float, default=0.0001, help='Learning rate')
-    parser.add_argument('--batch-size', type=int, default=32, help='Batch size')
+    parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
     parser.add_argument('--num-workers', type=int, default=4, help='Num of workers to load data')
     parser.add_argument('--phase', type=str, default='train', help='Phase: train or test')
-    parser.add_argument('--epochs', type=int, default=5, help='Training epochs')
+    parser.add_argument('--epochs', type=int, default=40, help='Training epochs')
     parser.add_argument('--resume', default=False, action='store_true', help='Resume')
     parser.add_argument('--use-gpu', default=[1,2], action='store_true', help='Use GPU')
     parser.add_argument('--path', type=str, default="/home/ubuntu/tu.na/ecg_2seconds/result/")
     
     return parser.parse_args()
+
+# [ 9  2  6  1  8  3 10  5]
 
 
 if __name__== "__main__":
@@ -32,23 +34,21 @@ if __name__== "__main__":
     if args.use_gpu and torch.cuda.is_available():
         device = torch.device('cuda:2')
     data_dir = os.path.normpath(args.data_dir)
-    bestmodel="bestmodel1.ptl"
-    net = resnet.resnet34(input_channels=12).to(device)
+    bestmodel="resnet18.ptl"
+    net = resnet.resnet18(input_channels=12).to(device)
     
     
     label_csv = os.path.join(data_dir, 'labels.csv')
     
-    train_folds, val_folds, test_folds = static.split_data(seed=args.seed)
+    train_folds=[ 9 , 2 , 6 , 1 , 8,  3 ,10 , 5]
+    val_folds=[4,7]
     
     train_dataset = ECG_DB.ECG_DB('train', data_dir, label_csv, train_folds)
-    
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
+    
     val_dataset = ECG_DB.ECG_DB('val', data_dir, label_csv, val_folds)
-    
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
-    test_dataset = ECG_DB.ECG_DB('test', data_dir, label_csv, test_folds)
     
-    test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
     
     
     
@@ -66,12 +66,17 @@ if __name__== "__main__":
             validation.validation(val_loader, net, args, criterion, device, bestmodel)
     else:
         data=[]
-        for file in os.listdir(args.path):   
+        for file in os.listdir(args.path): 
+             
             net.load_state_dict(torch.load(args.path+file, map_location=device))
-            f1_arr, f1_mean=test.test(test_loader, net, args, criterion, device)
-            data.append(["Resnet34",f1_mean,f1_arr[0],f1_arr[1], f1_arr[2], f1_arr[3], f1_arr[4], f1_arr[5], f1_arr[6], f1_arr[7],f1_arr[8]])   
+            size= static.get_size(args.path+file ,'mb')
+            start = time.time() 
+            f1_arr, f1_mean=test.test(val_loader, net, args, criterion, device)
+            stop = time.time()
+            time=stop - start
+            data.append([file.split(".")[0],f1_mean,size,time,f1_arr[0],f1_arr[1], f1_arr[2], f1_arr[3], f1_arr[4], f1_arr[5], f1_arr[6], f1_arr[7],f1_arr[8]])   
 
-        col_names = ["Model", "F1_mean",'F1_SNR', 'F1_AF', 'F1_IAVB', 'F1_LBBB', 'F1_RBBB', 'F1_PAC', 'F1_PVC', 'F1_STD', 'F1_STE']
+        col_names = ["Model", "F1_mean",'Size(MB)','Time(s)','F1_SNR', 'F1_AF', 'F1_IAVB', 'F1_LBBB', 'F1_RBBB', 'F1_PAC', 'F1_PVC', 'F1_STD', 'F1_STE']
         print(tabulate(data, headers=col_names, tablefmt="fancy_grid", showindex="always"))
         
         

@@ -27,9 +27,9 @@ def validation(dataloader, net, args, criterion, device, bestmodel):
     
     if args.phase == 'train' and avg_f1 > args.best_metric:
         args.best_metric = avg_f1
-        torch.save(net.state_dict(), "result/bestmodel.ptl")
+        torch.save(net.state_dict(), args.path+bestmodel)
     else:
         aucs = static.cal_aucs(y_trues, y_scores)
         avg_auc = np.mean(aucs)
-        print('AUCs:', aucs)
-        print('Avg AUC: %.4f' % avg_auc)
+        # print('AUCs:', aucs)
+        # print('Avg AUC: %.4f' % avg_auc)

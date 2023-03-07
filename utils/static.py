@@ -9,17 +9,6 @@ def split_data(seed=42):
     return folds[:8], folds[8:9], folds[9:]
 
 
-def prepare_input(ecg_file: str):
-    if ecg_file.endswith('.mat'):
-        ecg_file = ecg_file[:-4]
-    ecg_data, _ = wfdb.rdsamp(ecg_file)
-    nsteps, nleads = ecg_data.shape
-    ecg_data = ecg_data[-15000:, :]
-    result = np.zeros((15000, nleads)) # 30 s, 500 Hz
-    result[-nsteps:, :] = ecg_data
-    return result.transpose()
-
-
 def cal_scores(y_true, y_pred, y_score):
     precision = precision_score(y_true, y_pred)
     recall = recall_score(y_true, y_pred)
@@ -49,6 +38,8 @@ def cal_f1s(y_trues, y_scores, find_optimal=True):
     for i in range(y_trues.shape[1]):
         f1 = cal_f1(y_trues[:, i], y_scores[:, i], find_optimal)
         f1s.append(f1)
+        
+    # print(f1s)
     return np.array(f1s)
 
 

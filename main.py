@@ -52,7 +52,7 @@ if __name__== "__main__":
     
     net = resnet.resnet34(input_channels=12).to(device)
     
-    optimizer = torch.optim.Adam(net.parameters(), lr=args.lr)
+    optimizer = torch.optim.AdamW(net.parameters(), lr=args.lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 10, gamma=0.1)
     
     criterion = nn.BCEWithLogitsLoss()
@@ -66,7 +66,6 @@ if __name__== "__main__":
             validation.validation(val_loader, net, args, criterion, device, bestmodel)
     else:
         data=[]
-    
         for file in os.listdir(args.path):   
             net.load_state_dict(torch.load(args.path+file, map_location=device))
             f1_arr, f1_mean=test.test(test_loader, net, args, criterion, device)

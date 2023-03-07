@@ -29,11 +29,11 @@ def parse_args():
 if __name__== "__main__":
     args = parse_args()
     args.best_metric = 0
-    data_dir = os.path.normpath(args.data_dir)
-    bestmodel="bestmodel1.ptl"
-
     if args.use_gpu and torch.cuda.is_available():
         device = torch.device('cuda:2')
+    data_dir = os.path.normpath(args.data_dir)
+    bestmodel="bestmodel1.ptl"
+    net = resnet.resnet34(input_channels=12).to(device)
     
     
     label_csv = os.path.join(data_dir, 'labels.csv')
@@ -50,7 +50,7 @@ if __name__== "__main__":
     
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
     
-    net = resnet.resnet34(input_channels=12).to(device)
+    
     
     optimizer = torch.optim.AdamW(net.parameters(), lr=args.lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 10, gamma=0.1)

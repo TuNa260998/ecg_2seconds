@@ -1,1 +1,1 @@
-create file requirements :pip freeze > requirements.txt
+create a file requirements :pip freeze > requirements.txt

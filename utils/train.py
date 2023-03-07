@@ -1,15 +1,5 @@
-import argparse
-import os
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-
 from tqdm import tqdm
-import numpy as np
 
-from dataset import ECGDataset
-from resnet import resnet34
-from utils import cal_f1s, cal_aucs, split_data
 
 def train(dataloader, net, args, criterion, epoch, scheduler, optimizer, device):
     print('Training epoch %d:' % epoch)

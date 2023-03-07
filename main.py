@@ -3,10 +3,9 @@ from model import resnet
 from utils import ECG_DB
 from utils import train
 from utils import validation
-from utils import test
 from utils import static
-
-
+from model import seresnet
+import report_results
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -25,7 +24,6 @@ def parse_args():
     
     return parser.parse_args()
 
-# [ 9  2  6  1  8  3 10  5]
 
 
 if __name__== "__main__":
@@ -34,8 +32,10 @@ if __name__== "__main__":
     if args.use_gpu and torch.cuda.is_available():
         device = torch.device('cuda:2')
     data_dir = os.path.normpath(args.data_dir)
-    bestmodel="resnet18.ptl"
-    net = resnet.resnet18(input_channels=12).to(device)
+    
+    bestmodel="se_resnext18.ptl"
+    
+    net = seresnet.se_resnext18().to(device)
     
     
     label_csv = os.path.join(data_dir, 'labels.csv')
@@ -48,9 +48,6 @@ if __name__== "__main__":
     
     val_dataset = ECG_DB.ECG_DB('val', data_dir, label_csv, val_folds)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
-    
-    
-    
     
     optimizer = torch.optim.AdamW(net.parameters(), lr=args.lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 10, gamma=0.1)
@@ -65,18 +62,7 @@ if __name__== "__main__":
             train.train(train_loader, net, args, criterion, epoch, scheduler, optimizer, device)
             validation.validation(val_loader, net, args, criterion, device, bestmodel)
     else:
-        data=[]
-        for file in os.listdir(args.path): 
-             
-            net.load_state_dict(torch.load(args.path+file, map_location=device))
-            size= static.get_size(args.path+file ,'mb')
-            start = time.time() 
-            f1_arr, f1_mean=test.test(val_loader, net, args, criterion, device)
-            stop = time.time()
-            time=stop - start
-            data.append([file.split(".")[0],f1_mean,size,time,f1_arr[0],f1_arr[1], f1_arr[2], f1_arr[3], f1_arr[4], f1_arr[5], f1_arr[6], f1_arr[7],f1_arr[8]])   
-
-        col_names = ["Model", "F1_mean",'Size(MB)','Time(s)','F1_SNR', 'F1_AF', 'F1_IAVB', 'F1_LBBB', 'F1_RBBB', 'F1_PAC', 'F1_PVC', 'F1_STD', 'F1_STE']
+        data, col_names=report_results.table_report(args.path,args,val_loader,criterion,device)
         print(tabulate(data, headers=col_names, tablefmt="fancy_grid", showindex="always"))
         
         
